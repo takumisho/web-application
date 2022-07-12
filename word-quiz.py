@@ -177,7 +177,8 @@ def application(environ,start_response):
                 '<form onsubmit="return check_data()">\n' \
                 '<br>\n' \
                 '<p><header>' + japan + '</header></p>\n' \
-                '<p> 1: ' + opa + '   2: ' + opb + ' 3: ' + opc + '   4: ' + opd + '</p>\n' \
+                '<b><p> 1: ' + opa + '   2: ' + opb + ' 3: ' + opc + '   4: ' + opd + '</p></b>\n' \
+                '<b></b>'\
                 '<div style="text-align: center"><input type="submit" name="a" value =  1  class = "p"></div><br><br>\n' \
                 '<div style="text-align: center"><input type="submit" name="b" value =  2  class = "p"></div><br><br>\n' \
                 '<div style="text-align: center"><input type="submit" name="c" value =  3  class = "p"></div><br><br>\n' \
