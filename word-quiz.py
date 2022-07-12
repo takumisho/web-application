@@ -14,17 +14,22 @@ math = [] #単語の番号を入れるリスト
 word = [] #英単語を入れるリスト
 japanese = [] #日本語を入れるリスト
 option = [1,2,3,4]
-count = [0,1]
+count = [1,1]
 save = ["math","English","Japanese","number"] #回答を保存するためのリスト
+renew_save = ["count","math","English","Japanese","number"] #更新ボタンを押しても問題ないようにするため、count[0] = 5になったときに使うcount[0] = 4の時の回答を保存するリスト
 yet = [] #未回答リスト
 yet_japanese  = [] #未回答または間違えた問題の、日本語リスト
 mistake = [] #間違えた問題リスト
 
 
+#リストの要素の何番目かを返す関数
+def my_index(l,x,default = False):
+    return l.index(x) if x in l else default 
+
 #csvファイルを開き、1,2,3列目をそれぞれ、リスト math(番号を入れる) , 
 # word(英単語を入れる) , japanese(日本語を入れる) へ
 #また、未回答リスト yet も作成
-with open('英単語.csv', 'r', encoding='UTF-8') as file:
+with open('英単語2.csv', 'r', encoding='UTF-8') as file:
     data = []
     reader = csv.reader(file)
     for row in reader:
@@ -51,7 +56,7 @@ dbname = 'word.db'
 
 # テーブルの作成
 
-with open('英単語.csv', 'r', encoding='UTF-8') as file:
+with open('英単語2.csv', 'r', encoding='UTF-8') as file:
     con = sqlite3.connect(dbname)
     cur = con.cursor()
     cur.execute("SELECT COUNT(*) FROM sqlite_master"
@@ -82,14 +87,22 @@ with open('英単語.csv', 'r', encoding='UTF-8') as file:
 
 
 def application(environ,start_response):
-    
+    html = ""
+    f = open('home.html', 'r', encoding="utf-8")
+    f_in = open('input.html', 'r', encoding="utf-8")
     # HTML（共通ヘッダ部分）
-    html = '<html lang="ja">\n' \
+    while (True):
+        line = f.readline()
+        if line == "":
+            break
+        html += line
+    """html = '<html lang="ja">\n' \
            '<head>\n' \
            '<meta charset="UTF-8">\n' \
            '<title>英単語帳</title>\n' \
-            '<link rel="stylesheet" href="https://takumisho.github.io/css2/style5.css">\n' \
-           '</head>\n'
+            '<link rel="stylesheet" href="https://takumisho.github.io/web-application/style5.css">\n' \
+           '</head>\n' """
+
 
     #正解番号の選択
     op = random.choice(option)
@@ -119,16 +132,34 @@ def application(environ,start_response):
     word.insert(number,save_word)
     count[0] += 1
     
+    #count[0] = 5になった場合に使う
+    if count[0] == 4:
+        renew_save[0] = op
+        renew_save[1] = save_math
+        renew_save[2] = save_word
+        renew_save[3] = japan
+        renew_save[4] = save_number
+
     #更新ボタンを押しちゃうと、その時だけおかしくなる。
-    
+    print(count,op)
     #答えの値等を保存しておく
-    if count[0] % 3 ==2:
+    if count[0] % 4 ==2:
+        print("OK")
         count[1] = op
         save[0] = save_math
         save[1] = save_word
         save[2] = japan
         save[3] = save_number
-
+    
+    #更新ボタンを押してもおかしくならないように（ただし、2回以上更新ボタン押されると困る）
+    if count[0] == 5:
+        count[1] = renew_save[0]
+        save[0] = renew_save[1]
+        save[1] = renew_save[2]
+        save[2] = renew_save[3]
+        save[3] = renew_save[4]
+        count[0] = 3
+        print(count)
 
     # フォームデータを取得
     form = cgi.FieldStorage(environ=environ,keep_blank_values=True)
@@ -136,12 +167,19 @@ def application(environ,start_response):
         # 入力フォームの内容が空の場合（初めてページを開いた場合も含む）
 
         # HTML（入力フォーム部分）
+        """while (True):
+            line = f_in.readline()
+            if line == "":
+                break
+            html += line"""
         html += '<body>\n' \
                 '<div class="form1">\n' \
                 '<form onsubmit="return check_data()">\n' \
                 '<br>\n' \
-                '<header>' + japan + '</header><br><br><br><br>\n' \
-                ' 1: ' + opa + '   2: ' + opb + ' 3: ' + opc + '   4: ' + opd + '<br><br>\n' \
+                '<p><header>' + japan + '</header></p>\n' \
+                '<p class="md5"></p>\n'\
+                '<p> 1: ' + opa + '   2: ' + opb + ' 3: ' + opc + '   4: ' + opd + '</p>\n' \
+                '<p class="md2"></p>\n'\
                 '<div style="text-align: center"><input type="submit" name="a" value =  1  class = "p"></div><br><br>\n' \
                 '<div style="text-align: center"><input type="submit" name="b" value =  2  class = "p"></div><br><br>\n' \
                 '<div style="text-align: center"><input type="submit" name="c" value =  3  class = "p"></div><br><br>\n' \
@@ -159,8 +197,7 @@ def application(environ,start_response):
                 '</form>\n' \
                 '</div>\n' \
                 '</body>\n'
-
-
+       
     else:
 
         # フォームデータから各フィールド値を取得
@@ -189,10 +226,7 @@ def application(environ,start_response):
         listname = []
         listid = []
 
-
-        #リストの要素の何番目かを返す関数
-        def my_index(l,x,default = False):
-            return l.index(x) if x in l else default   
+  
 
         numyet = my_index(yet,[save[0],save[1],save[2]],-1) #未回答問題リストの何番目にあるかを取得
         miss_number = my_index(mistake,[save[0],save[1],save[2]],-1) #間違えた問題リストの何番目にあるかを取得
@@ -326,12 +360,12 @@ def application(environ,start_response):
 
         #間違えた問題、未回答問題表示
         elif wordall != "0":
-            num = (len(mistake))
+            num = len(mistake)
             html += '間違えた問題<br>\n'
             for i in range(num):
                 html += '<li>' + str(mistake[i][0]) + ' , ' + mistake[i][1] + ' , ' + mistake[i][2] + '</li>\n'
             html += '<br>未学習問題<br>\n'
-            num = (len(yet))
+            num = len(yet)
             for i in range(num):                        
                 html += '<li>' + str(yet[i][0]) + ' , ' + yet[i][1] + ' , ' + yet[i][2] + '</li>\n'
 

@@ -57,3 +57,15 @@ body {
         height:50px; 
         width:300px;
     }
+    p.mb2{
+        margin-bottom: 2em;
+    }
+    p.mb3{
+        margin-bottom: 3em;
+    }
+    p.mb4{
+        margin-bottom: 4em;
+    }
+    p.mb5{
+        margin-bottom: 5em;
+    }
