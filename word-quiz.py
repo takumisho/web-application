@@ -178,7 +178,8 @@ def application(environ,start_response):
                 '<br>\n' \
                 '<p><header>' + japan + '</header></p>\n' \
                 '<o class = "mb5"><p> 1: ' + opa + '   2: ' + opb + ' 3: ' + opc + '   4: ' + opd + '</p></o>\n' \
-                '<o></o>'\
+                '<p class="mb5">空白行を入れたい！</p>\n'\
+                '<p class="mb5">これで反映されます</p> \n'\
                 '<div style="text-align: center"><input type="submit" name="a" value =  1  class = "p"></div><br><br>\n' \
                 '<div style="text-align: center"><input type="submit" name="b" value =  2  class = "p"></div><br><br>\n' \
                 '<div style="text-align: center"><input type="submit" name="c" value =  3  class = "p"></div><br><br>\n' \
