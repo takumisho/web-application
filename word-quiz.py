@@ -25,7 +25,7 @@ mistake = [] #間違えた問題リスト
 #リストの要素の何番目かを返す関数
 def my_index(l,x,default = False):
     return l.index(x) if x in l else default 
-
+    
 #csvファイルを開き、1,2,3列目をそれぞれ、リスト math(番号を入れる) , 
 # word(英単語を入れる) , japanese(日本語を入れる) へ
 #また、未回答リスト yet も作成
@@ -90,19 +90,13 @@ def application(environ,start_response):
     html = ""
     f = open('home.html', 'r', encoding="utf-8")
     f_in = open('input.html', 'r', encoding="utf-8")
+    
     # HTML（共通ヘッダ部分）
     while (True):
         line = f.readline()
         if line == "":
             break
         html += line
-    """html = '<html lang="ja">\n' \
-           '<head>\n' \
-           '<meta charset="UTF-8">\n' \
-           '<title>英単語帳</title>\n' \
-            '<link rel="stylesheet" href="https://takumisho.github.io/web-application/style5.css">\n' \
-           '</head>\n' """
-
 
     #正解番号の選択
     op = random.choice(option)
@@ -161,43 +155,29 @@ def application(environ,start_response):
         count[0] = 3
         print(count)
 
+    #置き換えデータの作成    
+    page_data = {}
+    page_data['japan'] = japan
+    page_data['op_1'] = opa
+    page_data['op_2'] = opb
+    page_data['op_3'] = opc    
+    page_data['op_4'] = opd
+
     # フォームデータを取得
     form = cgi.FieldStorage(environ=environ,keep_blank_values=True)
     if ('v1' not in form):
         # 入力フォームの内容が空の場合（初めてページを開いた場合も含む）
 
         # HTML（入力フォーム部分）
-        """while (True):
+
+        while (True):
             line = f_in.readline()
             if line == "":
                 break
-            html += line"""
-        html += '<body>\n' \
-                '<div class="form1">\n' \
-                '<form onsubmit="return check_data()">\n' \
-                '<br>\n' \
-                '<p><header>' + japan + '</header></p>\n' \
-                '<o class = "mb5"><p> 1: ' + opa + '   2: ' + opb + ' 3: ' + opc + '   4: ' + opd + '</p></o>\n' \
-                '<p class="mb5">空白行を入れたい！</p>\n'\
-                '<p class="mb5">これで反映されます</p> \n'\
-                '<div style="text-align: center"><input type="submit" name="a" value =  1  class = "p"></div><br><br>\n' \
-                '<div style="text-align: center"><input type="submit" name="b" value =  2  class = "p"></div><br><br>\n' \
-                '<div style="text-align: center"><input type="submit" name="c" value =  3  class = "p"></div><br><br>\n' \
-                '<div style="text-align: center"><input type="submit" name="d" value =  4  class = "p"></div><br><br>\n' \
-                '<br>''<br><br>' \
-                '<div style="text-align: center"><input type="submit" name="unknown" value =  覚えていない  ></div><br>\n' \
-                '番号（整数） <input type="text" name="v1"><br>\n' \
-                '英単語　（文字列） <input type="text" name="v2"><br>\n' \
-                '日本語　（文字列） <input type="text" name="v3"><br>\n' \
-                '<input type="submit" name="search" value="検索">\n' \
-                '<input type="submit" name="add" value="追加">\n' \
-                '<input type="submit" name="dele" value="削除"><br>\n' \
-                '<input type="submit" name="wordall" value="誤答、未回答一覧"><br>\n' \
-                '何も入力せずに検索ボタンを押すことで、単語一覧を見ることが出来ます。<br>\n' \
-                '</form>\n' \
-                '</div>\n' \
-                '</body>\n'
-       
+            for key, value in page_data.items():
+                html = html.replace('{% ' + key + ' %}', value)
+            html += line
+
     else:
 
         # フォームデータから各フィールド値を取得
@@ -217,7 +197,23 @@ def application(environ,start_response):
         # データベース接続とカーソル生成
         con = sqlite3.connect(dbname)
         cur = con.cursor()
-        con.text_factory = str 
+        con.text_factory = str
+
+        #表から検索するときに使用する関数exam
+        def exam(sq,li):
+            for row in cur.execute(*sq):
+                li.append(row[0])
+                li.append(row[1])
+                li.append(row[2])
+            return li 
+
+        #検索結果を表示するのに使用する関数show
+        def show(li):
+            line = []
+            num = (len(li))/3
+            for i in range(int(num)):                        
+                line.append(str(li[3*i]) + ' , ' + li[3*i+1] + ' , ' + li[3*i+2])
+            return [line,num]
 
         #検索、追加、削除の条件分岐 
 
@@ -236,9 +232,9 @@ def application(environ,start_response):
         #正しい回答を選んだ場合
         if count[1] == int(a) or count[1] == int(b) or count[1] == int(c) or count[1] == int(d):
             html += '<head>\n' \
-                    '<br><circle></circle>\n<br><br><br>' \
+                    '<br><p class = "mb3"><circle></circle>\n</p>' \
                     '<meta http-equiv="refresh" content="0.3;URL=http://localhost:50305/">\n' \
-                    '</head>\n'
+                    '</head>\n'                    
             yet_japanese.pop(save[3])
             if numyet != -1:       
                 yet.pop(numyet)
@@ -247,8 +243,8 @@ def application(environ,start_response):
               
         #不正解または覚えていないボタンを押した場合
         elif int(a) + int(b) + int(c) + int(d) != 0 or unknown != "0":    
-            html += '<head>\n' \
-                    '<br><br><br><div class = "cross"></div><br><br>\n' \
+            html += '<p class = "mb4"><head></p>\n' \
+                    '<p><div class = "cross"></div></p>\n' \
                     '<div class = "answer">' + save[2] + ' ⇆ ' + save[1] + '</div>\n<br>' \
                     '<meta http-equiv="refresh" content="5;URL=http://localhost:50305/">\n' \
                     '</head>\n'
@@ -265,42 +261,34 @@ def application(environ,start_response):
             sqa = 'select * from English_Words where word like ? ' ,('%' +v2+ '%', )
             sql = 'select * from English_Words where japanese like ? ' ,('%' +v3+ '%', )
             sqall = 'select * from English_Words where japanese like ? and word like ?' ,('%' +v3+ '%', '%' +v2+ '%', )
-            #sql = 'select * from users where id LIKE "4" '
-            #sql = 'select * from users ip = v1'
+            
             # SQL文の実行とその結果のHTML形式への変換
             html += '<body>\n' \
                     '<div class="ol1">\n' \
-                    
+
+
             #部分一致していたものをリストの中へ
-            for row in cur.execute(*sqall):
-                listall.append(row[0])
-                listall.append(row[1])
-                listall.append(row[2])
-            for row in cur.execute(*sqa):
-                listname.append(row[0])
-                listname.append(row[1])
-                listname.append(row[2])
-            for row in cur.execute(*sql):
-                listid.append(row[0])
-                listid.append(row[1])
-                listid.append(row[2])
+            exam(sqall,listall)
+            exam(sqa,listname)
+            exam(sql,listid)            
 
             #word japanese どちらも部分一致あれば、表示、無ければ word の部分一致表示、
             #それもなければ、japanese の部分一致表示
             if len(listall) != 0:
-                all = (len(listall))/3
-                for i in range(int(all)):                        
-                    html += '<li>' + str(listall[3*i]) + ' , ' + listall[3*i+1] + ' , ' + listall[3*i+2] + '</li>\n'
-            elif len(listid) !=0:
-                id = (len(listid))/3
-                for i in range(int(id)):                        
-                    html += '<li>' + str(listid[3*i]) + ' , ' + listid[3*i+1] + ' , ' + listid[3*i+2] + '</li>\n'
-            elif len(listname) !=0:
-                name = (len(listname))/3
-                for i in range(int(name)):                        
-                    html += '<li>' + str(listname[3*i]) + ' , ' + listname[3*i+1] + ' , ' + listname[3*i+2] + '</li>\n'
-  
+                all_list = show(listall)
+                for i in range(int(all_list[1])):
+                    html += '<li>' + all_list[0][i] + '</li>\n'
 
+            elif len(listid) !=0:
+                word_list = show(listid)
+                for i in range(int(word_list[1])):
+                    html += '<li>' + word[0][i] + '</li>\n'
+
+            elif len(listname) !=0:
+                japan_list = show(listname)
+                for i in range(int(japan_list[1])):
+                    html += '<li>' + japan_list[0][i] + '</li>\n'
+  
             html += '</div>\n' \
         #検索ここまで
 
@@ -315,11 +303,9 @@ def application(environ,start_response):
             #表示内容
 
             html += '<body>\n' \
-                    '<div class="ol1">\n'   
-
-            html += '<li>' + str(v1) + ',' + v2 + ',' + v3 + '</li>\n'
-
-            html += '</div>\n' \
+                    '<div class="ol1">\n'   \
+                    '<li>' + str(v1) + ',' + v2 + ',' + v3 + '</li>\n'\
+                    '</div>\n' \
                     'これを追加しました。<br>\n' \
         #追加ここまで
 
@@ -333,17 +319,14 @@ def application(environ,start_response):
             #表示内容
 
             html += '<body>\n' \
-                    '<div class="ol1">\n'         
-            for row in cur.execute(*sqall):
-                listall.append(row[0])
-                listall.append(row[1])    
-                listall.append(row[2])  
-            if len(listall) != 0:
-                print(listall[0])
-                all = (len(listall))/3
-                for i in range(int(all)):                        
-                    html += '<li>' + str(listall[3*i]) + ',' + listall[3*i+1] + ',' + listall[3*i+2] + '</li>\n'
+                    '<div class="ol1">\n'
 
+            exam(sqall,listall)         
+
+            if len(listall) != 0:
+                all_list = show(listall)
+                for i in range(int(all_list[1])):
+                    html += '<li>' + all_list[0][i] + '</li>\n'
             
                 #削除実行
                 sql = 'delete from English_Words where number = ? and word = ? and japanese = ?' ,(v1,v2,v3, )
